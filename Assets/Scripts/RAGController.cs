@@ -5,12 +5,18 @@ using System.Text;
 
 public class RAGController : MonoBehaviour
 {
+    public static RAGController instance;
+
     private string apiUrl = "http://127.0.0.1:8000/generate_poem";
 
     // Exemplo de chamada
-    private void Start()
+    private void Awake()
     {
-        string[] palavras = { "Tristeza", "calma", "tranquilidade" };
+        instance = this;
+    }
+
+    public void CallPostGeneratePoem(string[] palavras)
+    {
         StartCoroutine(PostGeneratePoem(palavras));
     }
 
