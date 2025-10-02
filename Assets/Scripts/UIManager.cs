@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class UIManager : MonoBehaviour
 {
@@ -32,10 +33,11 @@ public class UIManager : MonoBehaviour
     public TMP_InputField word1Input;
     public TMP_InputField word2Input;
     public TMP_InputField word3Input;
-    //public TextMeshProUGUI generatedPoemText;
-    //public TextMeshProUGUI corpusVerseText;
-    //public TextMeshProUGUI scoreText;
     public static UIManager instance;
+
+    [Header("Screens")]
+    public GameObject victoryScreen;
+    public GameObject gameOverScreen;
 
     public GameManager gameManager;
 
@@ -44,8 +46,12 @@ public class UIManager : MonoBehaviour
         instance = this;
     }
 
-    public void OnSubmitButtonClicked()
+    public void OnGenerateButtonClicked()
     {
+        if (GameManager.instance.suggestions <= 0) return;
+
+        GameManager.instance.suggestions--;
+
         string[] words = {
             word1Input.text.Trim(),
             word2Input.text.Trim(),
@@ -55,24 +61,63 @@ public class UIManager : MonoBehaviour
         RAGController.instance.CallPostGeneratePoem(words);
     }
 
+    public void OnSubmitButtonClicked()
+    {
+        if (GameManager.instance.mana <= 0) return;
+
+        GameManager.instance.mana--;
+
+        string[] words = {
+            word1Input.text.Trim(),
+            word2Input.text.Trim(),
+            word3Input.text.Trim()
+        };
+
+        RAGController.instance.CallPostEvaluatePoem(words, GameManager.instance.specialRules[GameManager.instance.currentRound]);
+    }
+
     public void SkipRound()
     {
-        GameManager.instance.ProcessScore(9999);
+        GameManager.instance.currentInspiration = 9999;
+        GameManager.instance.ProcessScore();
     }
 
-    public void DisplayGeneratedPoem(string poem)
+    public void OpenInspirationPanel(string generatedPoem, string classification, string scoreTotal)
     {
-        generatedPoemText.text = "Poema gerado:\n" + poem;
+        inspirationSheet.SetActive(true);
+
+        generatedPoemText.text = generatedPoem;
+        inspirationClassificationText.text = classification;
+        inspirationScoreTotalText.text = scoreTotal;
     }
 
-    public void DisplayCorpusVerse(string verse)
+    public void CloseInspirationPanel(int inspiration)
     {
-        //corpusVerseText.text = "Verso encontrado:\n" + verse;
+        inspirationSheet.SetActive(false);
+
+        GameManager.instance.currentInspiration = inspiration;
     }
 
-    public void UpdateScore(int score)
+    public void OpenEvaluationPanel(string generatedPoem, string classification, string scoreTotal)
     {
-        //scoreText.text = "Pontuação: " + score;
+        impressionSheet.SetActive(true);
+
+        impressionGeneratedPoemText.text = generatedPoem;
+        impressionClassificationText.text = classification;
+        impressionScoreText.text = scoreTotal;
+    }
+
+    public void CloseEvaluationPanel(int impression)
+    {
+        impressionSheet.SetActive(false);
+
+        GameManager.instance.currentImpression = impression;
+    }
+
+    public void ShowEndScreen(bool hasWon)
+    {
+        if (hasWon) victoryScreen.SetActive(true);
+        else gameOverScreen.SetActive(true);
     }
 
     public void Update()
@@ -85,7 +130,7 @@ public class UIManager : MonoBehaviour
         manaLeftText.text = GameManager.instance.mana.ToString();
 
         insipirationScoreText.text = GameManager.instance.currentInspiration.ToString();
-        impressionScoreText.text = GameManager.instance.currentInspiration.ToString();
+        impressionScoreText.text = GameManager.instance.currentImpression.ToString();
         currentScoreText.text = GameManager.instance.currentScore.ToString();
         targetScoreText.text = GameManager.instance.targetScore.ToString();
     }

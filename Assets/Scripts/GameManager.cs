@@ -52,42 +52,31 @@ public class GameManager : MonoBehaviour
         characters[currentRound].SetActive(true);
     }
 
-    public void ProcessScore(int score)
+    public void ProcessScore()
     {
+        var score = currentImpression + currentInspiration;
         currentScore += score;
 
-        if(currentScore >= targetScore)
+        currentInspiration = 0;
+        currentImpression = 0;
+
+        if (currentScore >= targetScore)
         {
             currentRound++;
             
             if(currentRound > targetScores.Count)
             {
-                // Gameover
+                // Gameover Win
+                UIManager.instance.ShowEndScreen(true);
             }
             
             StartRound();
         }
-    }
-
-    public void OnPlayerSubmitWords(string[] words)
-    {
-        playerWords = words;
-
-        // Busca no corpus (exemplo: sempre rimando com a última palavra)
-        string targetWord = words[words.Length - 1];
-        string verseFromCorpus = corpusManager.GetVerseWithRhyme(targetWord);
-
-        // Gera poema com IA
-        poemGenerator.GeneratePoem(words, (generatedPoem) =>
+        else if(suggestions <= 0)
         {
-            // Mostra no UI
-            uiManager.DisplayGeneratedPoem(generatedPoem);
-            uiManager.DisplayCorpusVerse(verseFromCorpus);
-
-            // Calcula pontuação
-            int score = scoreManager.CalculateScore(words, generatedPoem);
-            uiManager.UpdateScore(score);
-        });
+            // Gameover Loss
+            UIManager.instance.ShowEndScreen(false);
+        }
     }
 }
 
